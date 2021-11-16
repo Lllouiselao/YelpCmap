@@ -1,9 +1,4 @@
-<html>
-  <head>
-    <title>Campgrounds!</title>
-  </head>
-
-  <body>
+<% layout('layouts/boilerplate') %> 
     <h1>All Campgrounds</h1>
     <div>
         <a href="/campgrounds/new">Add A Brand New Campground</a>
@@ -13,5 +8,4 @@
       <li><a href="/campgrounds/<%= campground._id%>"><%= campground.title%></a></li>
       <% } %>
     </ul>
-  </body>
-</html>
+ 
