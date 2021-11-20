@@ -2,11 +2,13 @@ const express = require("express");
 const path = require("path");
 const mongoose = require("mongoose");
 const ejsMate = require("ejs-mate");
-const {campgroundSchema} = require("./schemas")
+const { campgroundSchema, reviewSchema } = require("./schemas");
 const catchAsync = require("./utils/catchAsync");
 const ExpressError = require("./utils/ExpressError");
 const methodOverride = require("method-override");
 const Campground = require("./models/campground");
+const Review = require("./models/review");
+const campground = require("./models/campground");
 
 mongoose.connect("mongodb://localhost:27017/YelpCamp");
 
@@ -25,19 +27,26 @@ app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 
-
 //the middleware handler the server side validation
-const validateCampground = (req, res, next) =>{
-    const {error} = campgroundSchema.validate(req.body);
-    if(error){
-        const msg = error.details.map(el => el.message). join('.')
-        throw new ExpressError(msg, 400);
-    }else{
-        next();
+const validateCampground = (req, res, next) => {
+  const { error } = campgroundSchema.validate(req.body);
+  if (error) {
+    const msg = error.details.map((el) => el.message).join(".");
+    throw new ExpressError(msg, 400);
+  } else {
+    next();
+  }
+};
+
+const validateReview = (req,res,next) => {
+    const { error } = reviewSchema.validate(req.body);
+    if (error) {
+      const msg = error.details.map((el) => el.message).join(".");
+      throw new ExpressError(msg, 400);
+    } else {
+      next();
     }
-}
-
-
+  };
 
 app.get("/", (req, res) => {
   res.render("home");
@@ -56,9 +65,10 @@ app.get("/campgrounds/new", (req, res) => {
 //create a new campground
 app.post(
   "/campgrounds",
-  validateCampground, catchAsync(async (req, res, next) => {
+  validateCampground,
+  catchAsync(async (req, res, next) => {
     //if (!req.body.campground)
-      //throw new ExpressError(" Invalid Campground Data", 400);  
+    //throw new ExpressError(" Invalid Campground Data", 400);
     const newcampground = new Campground(req.body.campground);
     await newcampground.save();
     res.redirect(`/campgrounds/${newcampground._id}`);
@@ -67,9 +77,9 @@ app.post(
 
 // access to the specific info page
 app.get(
-  "/campgrounds/:id", 
+  "/campgrounds/:id",
   catchAsync(async (req, res) => {
-    const campground = await Campground.findById(req.params.id);
+    const campground = await Campground.findById(req.params.id).populate('reviews');
     res.render("campgrounds/show", { campground });
   })
 );
@@ -85,7 +95,8 @@ app.get(
 
 //edit the exsisting campground
 app.put(
-  "/campgrounds/:id", validateCampground,
+  "/campgrounds/:id",
+  validateCampground,
   catchAsync(async (req, res) => {
     const { id } = req.params;
     const updatecampground = await Campground.findByIdAndUpdate(id, {
@@ -105,6 +116,28 @@ app.delete(
   })
 );
 
+//delete the campground cooment
+app.delete("/campgrounds/:id/reviews/:reviewId", catchAsync(async(req, res) =>{
+  const {id, reviewId} = req.params;
+  await Campground.findByIdAndUpdate(id, {$pull: {review: reviewId}});
+  await Review.findByIdAndDelete(reviewId);
+  res.redirect(`/campgrounds/${id}`);
+}))
+
+// making reviews for the campgrounds
+app.post(
+  "/campgrounds/:id/reviews",
+  validateReview,
+  catchAsync(async (req, res) => {
+    const campground = await Campground.findById(req.params.id);
+    const userreview = new Review(req.body.review);
+    campground.reviews.push(userreview);
+    await userreview.save();
+    await campground.save();
+    res.redirect(`/campgrounds/${campground._id}`);
+  })
+);
+
 // if the root we don't recognize then 404
 app.all("*", (req, res, next) => {
   next(new ExpressError("Page Not Found", 404));
@@ -112,9 +145,9 @@ app.all("*", (req, res, next) => {
 
 //generic Error Handler
 app.use((err, req, res, next) => {
-  const { statusCode = 999} = err;
-  if (!err.message ) err.message = 'Oh No I Found An Error'
-  res.status(statusCode).render('error', {err})
+  const { statusCode = 999 } = err;
+  if (!err.message) err.message = "Oh No I Found An Error";
+  res.status(statusCode).render("error", { err });
 });
 
 app.listen(3000, () => {
