@@ -3,14 +3,19 @@ const path = require("path");
 const mongoose = require("mongoose");
 const ejsMate = require("ejs-mate");
 const session = require("express-session");
-const flash = require("connect-flash")
+const flash = require("connect-flash");
+const passport = require("passport");
 
 const ExpressError = require("./utils/ExpressError");
 const methodOverride = require("method-override");
+const Passport = require('passport');
+const LocalStrategy = require('passport-local');
+const User = require('./models/user')
 
 
-const campgrounds = require("./routes/campgrounds");
-const reviews = require("./routes/review");
+const campgroundsRoutes = require("./routes/campgrounds");
+const reviewsRoutes = require("./routes/review");
+const userRoutes = require("./routes/newuser")
 
 
 mongoose.connect("mongodb://localhost:27017/YelpCamp");
@@ -46,15 +51,26 @@ const sessionConfig = {
 }
 app.use(session(sessionConfig))
 
+// passport session must after session
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
+
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+
 app.use((req, res, next) =>{
+  res.locals.currentUser = req.user;
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
   next();
 })
 
-
-app.use("/campgrounds", campgrounds)
-app.use("/campgrounds/:id/reviews", reviews)
+// connecting to two routes campgrounds/reviews
+app.use("/campgrounds", campgroundsRoutes)
+app.use("/campgrounds/:id/reviews", reviewsRoutes)
+app.use("/", userRoutes)
 
 app.get("/", (req, res) => {
   res.render("home");
