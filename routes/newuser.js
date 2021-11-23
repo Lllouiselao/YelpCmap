@@ -16,7 +16,7 @@ router.post(
     try {
       const { username, email, password } = req.body;
       const newuser = new User({ email, username });
-      const registeruser = await User.register(newuser, password);
+      const registeruser = await user.register(newuser, password);
       req.login(registeruser, (err) => {
         if (err) {
           req.flash("err", err.message);
@@ -45,10 +45,11 @@ router.post(
     failureRedirect: "/login",
   }),
   (req, res) => {
-    const redirectUrl = req.session.returnTo || '/campgrounds'
     req.flash("success", "Welcome Back");
-    delete req.session.returnTo;
+    const redirectUrl = req.session.returnTo || '/campgrounds'
+    
     res.redirect(redirectUrl);
+    delete req.session.returnTo;
   }
 );
 

@@ -19,6 +19,7 @@ const seeDB = async() =>{
         const random1000 = Math.floor(Math.random() * 1000);
         const price = Math.floor(Math.random() * 20) + 10;
         const camp = new Campground({
+            author: '619a6268d0cfc25f0526c10d',
             location: `${cities[random1000].city}, ${cities[random1000].state}`,
             title: `${sample(descriptors)} ${sample(places)}`,
             description: 'The forest was humble, thick, and ancient. Its canopy was eclipsed by hazel, redwood, and linden, their crowns allowed cascading lights to shimmer through for a hodgepodge of mushrooms to rule the crunchy layer of leaves below.Curling tree limbs grasped many a tree, and a range of flowers, which desperately tried to claim the last remnants of light, clashed with the otherwise jade forest floor.',
