@@ -1,25 +1,20 @@
 const express = require("express");
 const router = express.Router();
+const campgrounds = require("../controllers/campgrounds")
 const catchAsync = require("../utils/catchAsync");
+const multer = require("multer");
+const upload = multer({ dest: 'uploads/'})
 
-const {
-  ensureLoggedIn,
-  validateCampground,
-  isAuthor,
-} = require("../middleware");
+const {ensureLoggedIn,
+      validateCampground,
+      isAuthor,} = require("../middleware");
 
 const Campground = require("../models/campground");
-const campground = require("../models/campground");
 
 // 'access' to the campground page
-router.get("/", async (req, res) => {
-  const campgrounds = await Campground.find({});
-  res.render("campgrounds/index", { campgrounds });
-});
+router.get("/", catchAsync (campgrounds.index));
 
-router.get("/new", ensureLoggedIn, (req, res) => {
-  res.render("campgrounds/new");
-});
+router.get("/new", ensureLoggedIn, campgrounds.new);
 
 //create a new campground
 router.post(
@@ -49,7 +44,8 @@ router.get(
       return res.redirect("/campgrounds");
     }
     res.render("campgrounds/show", { campground });
-  })
+  }
+  )
 );
 
 // acess to edit specific info page
