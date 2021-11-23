@@ -47,7 +47,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const secret = process.env.SECRET ||'secret';
 
-const store = MongoStore.create({
+store = MongoStore.create({
   mongoUrl: dbUrl,
   touchAfter: 24 * 60 * 60,
   crypto: {
@@ -106,6 +106,7 @@ app.use((err, req, res, next) => {
   res.status(statusCode).render("error", { err });
 });
 
+const port = process.env.PORT || 3000;
 app.listen(3000, () => {
-  console.log("serving on port 3000");
+  console.log(`serving on port ${port}`);
 });
